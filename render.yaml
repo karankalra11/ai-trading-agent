@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: trading-signal-agent-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements-lite.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      # ── AI Provider ─────────────────────────────────────────
+      - key: AI_PROVIDER
+        value: gemini           # FREE — no credit card needed
+
+      - key: GEMINI_API_KEY
+        sync: false             # ← You fill this in Render dashboard
+                                #   Get free key: aistudio.google.com/app/apikey
+
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+
+      # ── Optional: swap to Groq (also free) ──────────────────
+      # - key: AI_PROVIDER
+      #   value: groq
+      # - key: GROQ_API_KEY
+      #   sync: false            # Get free key: console.groq.com
+
+      # ── Optional services ────────────────────────────────────
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: NEWSAPI_KEY
+        sync: false
+
+      # ── App config ───────────────────────────────────────────
+      - key: DATABASE_URL
+        value: sqlite:///./trading.db
+      - key: SCHEDULE_INTERVAL_MIN
+        value: "30"
+      - key: USE_FINBERT
+        value: "false"
+      - key: MIN_CONFIDENCE_ALERT
+        value: "75"
+      - key: PYTHON_VERSION
+        value: "3.11.0"
