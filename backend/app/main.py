@@ -49,6 +49,22 @@ app.include_router(market_router)
 app.include_router(news_router)
 
 
+@app.get("/")
+def root():
+    return {
+        "service": "AI Trading Signal Agent",
+        "status": "online ✅",
+        "docs": "/docs",
+        "health": "/health",
+        "endpoints": {
+            "signals":   "/api/signals",
+            "watchlist": "/api/market/watchlist",
+            "trigger":   "/api/signals/trigger?ticker=AAPL&market=us  [POST]",
+        },
+        "tip": "Open /docs for the full interactive API explorer",
+    }
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "trading-signal-agent"}
