@@ -7,6 +7,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",          # silently ignore unknown env vars like USE_FINBERT
     )
 
     # AI provider — choose: gemini (FREE), groq (FREE), openai, claude
