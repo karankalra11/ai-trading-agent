@@ -9,20 +9,20 @@ services:
     envVars:
       # ── AI Provider ─────────────────────────────────────────
       - key: AI_PROVIDER
-        value: gemini           # FREE — no credit card needed
+        value: openrouter       # FREE — any email, no credit card
 
+      - key: OPENROUTER_API_KEY
+        sync: false             # ← Fill in Render dashboard
+                                #   Get free key: openrouter.ai (any email)
+
+      - key: OPENROUTER_MODEL
+        value: meta-llama/llama-3.3-70b-instruct:free
+
+      # ── Optional: Gemini backup ──────────────────────────────
       - key: GEMINI_API_KEY
-        sync: false             # ← You fill this in Render dashboard
-                                #   Get free key: aistudio.google.com/app/apikey
-
+        sync: false
       - key: GEMINI_MODEL
-        value: gemini-1.5-flash
-
-      # ── Optional: swap to Groq (also free) ──────────────────
-      # - key: AI_PROVIDER
-      #   value: groq
-      # - key: GROQ_API_KEY
-      #   sync: false            # Get free key: console.groq.com
+        value: gemini-2.0-flash-lite
 
       # ── Optional services ────────────────────────────────────
       - key: TELEGRAM_BOT_TOKEN

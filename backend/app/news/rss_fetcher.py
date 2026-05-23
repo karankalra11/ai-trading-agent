@@ -1,3 +1,4 @@
+from __future__ import annotations
 import feedparser
 import requests
 from datetime import datetime, timezone

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 SignalRunner: orchestrates the full pipeline for each ticker.
 """

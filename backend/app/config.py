@@ -10,12 +10,16 @@ class Settings(BaseSettings):
         extra="ignore",          # silently ignore unknown env vars like USE_FINBERT
     )
 
-    # AI provider — choose: gemini (FREE), groq (FREE), openai, claude
-    ai_provider: str = "gemini"
+    # AI provider — choose: openrouter (FREE, any email), gemini, groq, openai, claude
+    ai_provider: str = "openrouter"
+
+    # OpenRouter (FREE — any email, no card) — https://openrouter.ai
+    openrouter_api_key: str = ""
+    openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
 
     # Gemini (FREE default) — https://aistudio.google.com/app/apikey
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-1.5-flash"
+    gemini_model: str = "gemini-2.0-flash"
 
     # Groq (FREE backup) — https://console.groq.com
     groq_api_key: str = ""

@@ -2,12 +2,13 @@
 Provider-agnostic AI brain for trading signal generation.
 
 Supported providers (set AI_PROVIDER in .env):
-  gemini   — Google Gemini 1.5 Flash (FREE: 1,500 req/day, no card needed)
-  groq     — Groq LLaMA 3.3 70B     (FREE: 14,400 req/day, no card needed)
-  openai   — OpenAI GPT-4o mini      (paid, cheap ~$0.15/1M tokens)
-  claude   — Anthropic Claude        (paid)
+  openrouter — OpenRouter free models  (FREE: any email, no card needed) ← RECOMMENDED
+  gemini     — Google Gemini 2.0 Flash (FREE: Google account needed)
+  groq       — Groq LLaMA 3.3 70B     (FREE: work email required)
+  openai     — OpenAI GPT-4o mini      (paid, cheap ~$0.15/1M tokens)
+  claude     — Anthropic Claude        (paid)
 
-Default: gemini
+Default: openrouter
 """
 
 import json
@@ -167,6 +168,64 @@ class GroqBrain:
         raise SignalParseError("Groq exhausted retries")
 
 
+# ── OpenRouter (FREE — any email, no card) ────────────────────────────────────
+
+class OpenRouterBrain:
+    """
+    OpenRouter gives access to many FREE models via one API.
+    Works with ANY email — Gmail, personal, anything.
+    No credit card needed for free models.
+
+    Free models available:
+      meta-llama/llama-3.3-70b-instruct:free
+      deepseek/deepseek-r1:free
+      mistralai/mistral-7b-instruct:free
+      google/gemma-3-27b-it:free
+
+    Get key: https://openrouter.ai  (sign up with any email)
+    """
+
+    OPENROUTER_BASE = "https://openrouter.ai/api/v1"
+
+    def __init__(self):
+        from openai import OpenAI
+        self.client = OpenAI(
+            api_key=settings.openrouter_api_key,
+            base_url=self.OPENROUTER_BASE,
+        )
+        self.builder = PromptBuilder()
+
+    def generate_signal(self, ticker, exchange, asset_type, price_data, indicators, sentiment) -> dict:
+        system = self.builder.build_system_prompt()
+        user = self.builder.build_user_prompt(
+            ticker, exchange, asset_type, price_data, indicators, sentiment
+        )
+        for attempt in range(3):
+            try:
+                resp = self.client.chat.completions.create(
+                    model=settings.openrouter_model,
+                    messages=[
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user},
+                    ],
+                    temperature=0,
+                    max_tokens=1024,
+                    extra_headers={
+                        "HTTP-Referer": "https://ai-trading-agent.onrender.com",
+                        "X-Title": "AI Trading Signal Agent",
+                    },
+                )
+                raw = resp.choices[0].message.content
+                signal = _parse_and_validate(raw, ticker)
+                signal["raw_claude_response"] = raw
+                return signal
+            except Exception as e:
+                if attempt == 2:
+                    raise SignalParseError(f"OpenRouter failed for {ticker}: {e}")
+                time.sleep(2 ** attempt)
+        raise SignalParseError("OpenRouter exhausted retries")
+
+
 # ── OpenAI (paid, cheap) ───────────────────────────────────────────────────────
 
 class OpenAIBrain:
@@ -243,11 +302,19 @@ class ClaudeBrain:
 def get_brain():
     """
     Returns the correct AI brain based on AI_PROVIDER setting.
-    Falls back gracefully: gemini → groq → error message.
     """
-    provider = (settings.ai_provider or "gemini").lower()
+    provider = (settings.ai_provider or "openrouter").lower()
 
-    if provider == "gemini":
+    if provider == "openrouter":
+        if not settings.openrouter_api_key:
+            raise RuntimeError(
+                "OPENROUTER_API_KEY is not set.\n"
+                "Get a FREE key at: https://openrouter.ai\n"
+                "Works with ANY email — Gmail, personal, anything. No credit card!"
+            )
+        return OpenRouterBrain()
+
+    elif provider == "gemini":
         if not settings.gemini_api_key:
             raise RuntimeError(
                 "GEMINI_API_KEY is not set.\n"
@@ -278,5 +345,5 @@ def get_brain():
     else:
         raise RuntimeError(
             f"Unknown AI_PROVIDER='{provider}'. "
-            "Choose: gemini, groq, openai, claude"
+            "Choose: openrouter, gemini, groq, openai, claude"
         )

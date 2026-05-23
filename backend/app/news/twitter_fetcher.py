@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Twitter/X scraping via requests + nitter public instances.
 No API key required. Falls back gracefully if unavailable.
