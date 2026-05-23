@@ -39,6 +39,7 @@ class Settings(BaseSettings):
 
     # News
     newsapi_key: str = ""
+    newsdata_api_key: str = ""   # newsdata.io — free 200 req/day
 
     # Database
     database_url: str = "sqlite:///./trading.db"

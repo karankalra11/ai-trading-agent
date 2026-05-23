@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from hashlib import md5
 from .rss_fetcher import RSSFetcher
 from .newsapi_fetcher import NewsAPIFetcher
+from .newsdata_fetcher import NewsDataFetcher
 from .twitter_fetcher import TwitterFetcher
 
 
@@ -11,15 +12,17 @@ class NewsAggregator:
     def __init__(self):
         self.rss = RSSFetcher()
         self.newsapi = NewsAPIFetcher()
+        self.newsdata = NewsDataFetcher()
         self.twitter = TwitterFetcher()
 
     def gather_for_ticker(self, ticker: str, hours_back: int = 12) -> list[dict]:
         all_items = []
 
-        with ThreadPoolExecutor(max_workers=3) as pool:
+        with ThreadPoolExecutor(max_workers=4) as pool:
             futures = {
                 pool.submit(self.rss.fetch_for_ticker, ticker): "rss",
                 pool.submit(self.newsapi.fetch_for_ticker, ticker, hours_back): "newsapi",
+                pool.submit(self.newsdata.fetch_for_ticker, ticker): "newsdata",
                 pool.submit(self.twitter.fetch_for_ticker, ticker): "twitter",
             }
             for future in as_completed(futures):
