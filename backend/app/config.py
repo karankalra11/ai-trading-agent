@@ -51,11 +51,25 @@ class Settings(BaseSettings):
     # Sentiment model
     sentiment_model: str = "ProsusAI/finbert"
 
-    # Watchlists
-    us_watchlist: list[str] = ["AAPL", "NVDA", "MSFT", "TSLA", "META", "GOOGL", "AMZN"]
-    india_watchlist: list[str] = ["RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "WIPRO.NS"]
-    crypto_watchlist: list[str] = ["BTC", "ETH", "SOL", "BNB", "XRP"]
-    etf_watchlist: list[str] = ["SPY", "QQQ", "GLD", "VTI", "ARKK"]
+    # Watchlists (~50 tickers total)
+    us_watchlist: list[str] = [
+        "AAPL", "NVDA", "MSFT", "TSLA", "META", "GOOGL", "AMZN",
+        "JPM", "V", "JNJ", "WMT", "XOM", "BAC", "MA", "PG",
+        "NFLX", "AMD", "ORCL", "UBER", "COIN",
+    ]
+    india_watchlist: list[str] = [
+        "RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "WIPRO.NS",
+        "ICICIBANK.NS", "HINDUNILVR.NS", "BAJFINANCE.NS", "SBIN.NS",
+        "ADANIENT.NS", "TATAMOTORS.NS", "ZOMATO.NS",
+    ]
+    crypto_watchlist: list[str] = [
+        "BTC", "ETH", "SOL", "BNB", "XRP",
+        "ADA", "DOGE", "AVAX", "DOT", "LINK",
+    ]
+    etf_watchlist: list[str] = [
+        "SPY", "QQQ", "GLD", "VTI", "ARKK",
+        "IWM", "DIA", "XLF", "XLK", "SLV",
+    ]
 
     # CoinGecko coin ID map
     crypto_id_map: dict = {
@@ -64,6 +78,11 @@ class Settings(BaseSettings):
         "SOL": "solana",
         "BNB": "binancecoin",
         "XRP": "ripple",
+        "ADA": "cardano",
+        "DOGE": "dogecoin",
+        "AVAX": "avalanche-2",
+        "DOT": "polkadot",
+        "LINK": "chainlink",
     }
 
 
