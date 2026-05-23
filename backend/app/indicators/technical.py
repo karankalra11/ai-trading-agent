@@ -1,62 +1,61 @@
+"""
+Technical indicators implemented in pure pandas/numpy.
+No pandas-ta, no numba, no C compiler — works on any free host.
+"""
 import pandas as pd
-import pandas_ta as ta
 import numpy as np
 
 
 class TechnicalAnalyzer:
 
     def compute_all(self, df: pd.DataFrame) -> dict:
-        """Compute all technical indicators and return a flat dict."""
         if df.empty or len(df) < 20:
             return {}
 
         result = {}
-        try:
-            result.update(self.compute_rsi(df))
-        except Exception:
-            pass
-        try:
-            result.update(self.compute_macd(df))
-        except Exception:
-            pass
-        try:
-            result.update(self.compute_bollinger(df))
-        except Exception:
-            pass
-        try:
-            result.update(self.compute_ema(df))
-        except Exception:
-            pass
-        try:
-            result.update(self.compute_volume(df))
-        except Exception:
-            pass
-        try:
-            result.update(self.compute_atr(df))
-        except Exception:
-            pass
+        for fn in [
+            self.compute_rsi,
+            self.compute_macd,
+            self.compute_bollinger,
+            self.compute_ema,
+            self.compute_volume,
+            self.compute_atr,
+        ]:
+            try:
+                result.update(fn(df))
+            except Exception:
+                pass
 
         result["interpretations"] = self.interpret_signals(result)
         return result
 
+    # ── RSI ───────────────────────────────────────────────────────────────────
     def compute_rsi(self, df: pd.DataFrame, length: int = 14) -> dict:
-        rsi = ta.rsi(df["close"], length=length)
-        val = float(rsi.iloc[-1]) if rsi is not None and not rsi.empty else 50.0
-        if val >= 70:
-            signal = "overbought"
-        elif val <= 30:
-            signal = "oversold"
-        else:
-            signal = "neutral"
+        close = df["close"].astype(float)
+        delta = close.diff()
+        gain = delta.clip(lower=0)
+        loss = -delta.clip(upper=0)
+        avg_gain = gain.ewm(com=length - 1, min_periods=length).mean()
+        avg_loss = loss.ewm(com=length - 1, min_periods=length).mean()
+        rs = avg_gain / avg_loss.replace(0, np.nan)
+        rsi = 100 - (100 / (1 + rs))
+        val = float(rsi.iloc[-1]) if not rsi.empty else 50.0
+        if np.isnan(val):
+            val = 50.0
+        signal = "overbought" if val >= 70 else "oversold" if val <= 30 else "neutral"
         return {"rsi_14": round(val, 2), "rsi_signal": signal}
 
-    def compute_macd(self, df: pd.DataFrame) -> dict:
-        macd_df = ta.macd(df["close"], fast=12, slow=26, signal=9)
-        if macd_df is None or macd_df.empty:
-            return {"macd": 0, "macd_signal_line": 0, "macd_histogram": 0, "macd_trend": "neutral"}
-        macd_val = float(macd_df.iloc[-1, 0])
-        signal_val = float(macd_df.iloc[-1, 1])
-        hist_val = float(macd_df.iloc[-1, 2])
+    # ── MACD ──────────────────────────────────────────────────────────────────
+    def compute_macd(self, df: pd.DataFrame, fast: int = 12, slow: int = 26, signal: int = 9) -> dict:
+        close = df["close"].astype(float)
+        ema_fast = close.ewm(span=fast, adjust=False).mean()
+        ema_slow = close.ewm(span=slow, adjust=False).mean()
+        macd_line = ema_fast - ema_slow
+        signal_line = macd_line.ewm(span=signal, adjust=False).mean()
+        histogram = macd_line - signal_line
+        macd_val = float(macd_line.iloc[-1])
+        signal_val = float(signal_line.iloc[-1])
+        hist_val = float(histogram.iloc[-1])
         trend = "bullish" if macd_val > signal_val else "bearish"
         return {
             "macd": round(macd_val, 4),
@@ -65,33 +64,37 @@ class TechnicalAnalyzer:
             "macd_trend": trend,
         }
 
+    # ── Bollinger Bands ───────────────────────────────────────────────────────
     def compute_bollinger(self, df: pd.DataFrame, length: int = 20, std: float = 2.0) -> dict:
-        bb = ta.bbands(df["close"], length=length, std=std)
-        if bb is None or bb.empty:
-            return {}
-        upper = float(bb.iloc[-1, 0])
-        mid = float(bb.iloc[-1, 1])
-        lower = float(bb.iloc[-1, 2])
-        bw = float(bb.iloc[-1, 3]) if bb.shape[1] > 3 else 0.0
-        pct_b = float(bb.iloc[-1, 4]) if bb.shape[1] > 4 else 0.5
+        close = df["close"].astype(float)
+        mid = close.rolling(length).mean()
+        sigma = close.rolling(length).std()
+        upper = mid + std * sigma
+        lower = mid - std * sigma
+        bandwidth = ((upper - lower) / mid).iloc[-1]
+        price = close.iloc[-1]
+        band_range = float(upper.iloc[-1]) - float(lower.iloc[-1])
+        pct_b = (price - float(lower.iloc[-1])) / band_range if band_range != 0 else 0.5
         return {
-            "bb_upper": round(upper, 4),
-            "bb_middle": round(mid, 4),
-            "bb_lower": round(lower, 4),
-            "bb_bandwidth": round(bw, 4),
-            "bb_pct_b": round(pct_b, 4),
+            "bb_upper": round(float(upper.iloc[-1]), 4),
+            "bb_middle": round(float(mid.iloc[-1]), 4),
+            "bb_lower": round(float(lower.iloc[-1]), 4),
+            "bb_bandwidth": round(float(bandwidth), 4),
+            "bb_pct_b": round(float(pct_b), 4),
         }
 
+    # ── EMA ───────────────────────────────────────────────────────────────────
     def compute_ema(self, df: pd.DataFrame) -> dict:
-        ema20 = ta.ema(df["close"], length=20)
-        ema50 = ta.ema(df["close"], length=50)
-        e20 = float(ema20.iloc[-1]) if ema20 is not None and not ema20.empty else 0
-        e50 = float(ema50.iloc[-1]) if ema50 is not None and not ema50.empty else 0
+        close = df["close"].astype(float)
+        ema20 = close.ewm(span=20, adjust=False).mean()
+        ema50 = close.ewm(span=50, adjust=False).mean()
+        e20 = float(ema20.iloc[-1])
+        e50 = float(ema50.iloc[-1])
 
         crossover = "none"
-        if len(df) >= 51 and ema20 is not None and ema50 is not None:
-            prev_e20 = float(ema20.iloc[-2]) if len(ema20) >= 2 else e20
-            prev_e50 = float(ema50.iloc[-2]) if len(ema50) >= 2 else e50
+        if len(df) >= 51:
+            prev_e20 = float(ema20.iloc[-2])
+            prev_e50 = float(ema50.iloc[-2])
             if prev_e20 <= prev_e50 and e20 > e50:
                 crossover = "golden_cross"
             elif prev_e20 >= prev_e50 and e20 < e50:
@@ -103,6 +106,7 @@ class TechnicalAnalyzer:
 
         return {"ema_20": round(e20, 4), "ema_50": round(e50, 4), "ema_crossover": crossover}
 
+    # ── Volume ────────────────────────────────────────────────────────────────
     def compute_volume(self, df: pd.DataFrame) -> dict:
         if "volume" not in df.columns or df["volume"].sum() == 0:
             return {"avg_volume_10d": 0, "current_volume": 0, "volume_ratio": 1.0}
@@ -111,11 +115,22 @@ class TechnicalAnalyzer:
         ratio = round(curr_vol / avg_vol, 2) if avg_vol > 0 else 1.0
         return {"avg_volume_10d": int(avg_vol), "current_volume": int(curr_vol), "volume_ratio": ratio}
 
+    # ── ATR ───────────────────────────────────────────────────────────────────
     def compute_atr(self, df: pd.DataFrame, length: int = 14) -> dict:
-        atr = ta.atr(df["high"], df["low"], df["close"], length=length)
-        val = float(atr.iloc[-1]) if atr is not None and not atr.empty else 0.0
+        high = df["high"].astype(float)
+        low = df["low"].astype(float)
+        close = df["close"].astype(float)
+        prev_close = close.shift(1)
+        tr = pd.concat([
+            high - low,
+            (high - prev_close).abs(),
+            (low - prev_close).abs(),
+        ], axis=1).max(axis=1)
+        atr = tr.ewm(span=length, adjust=False).mean()
+        val = float(atr.iloc[-1]) if not atr.empty else 0.0
         return {"atr_14": round(val, 4)}
 
+    # ── Interpretations ───────────────────────────────────────────────────────
     def interpret_signals(self, indicators: dict) -> dict:
         interp = {}
 
