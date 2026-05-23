@@ -38,8 +38,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -57,9 +57,10 @@ def root():
         "docs": "/docs",
         "health": "/health",
         "endpoints": {
-            "signals":   "/api/signals",
-            "watchlist": "/api/market/watchlist",
-            "trigger":   "/api/signals/trigger?ticker=AAPL&market=us  [POST]",
+            "signals":      "/api/signals",
+            "run_all":      "/api/signals/run-all  ← click to generate all signals now",
+            "watchlist":    "/api/market/watchlist",
+            "trigger_one":  "/api/signals/trigger?ticker=AAPL&market=us  [POST]",
         },
         "tip": "Open /docs for the full interactive API explorer",
     }

@@ -109,3 +109,21 @@ def trigger_signal(ticker: str, market: str = "us", background_tasks: Background
 
     background_tasks.add_task(run)
     return {"message": f"Signal run triggered for {ticker} ({market})"}
+
+
+@router.get("/run-all")
+def run_all_signals(background_tasks: BackgroundTasks = BackgroundTasks()):
+    """
+    Browser-friendly GET endpoint — triggers signal generation for ALL tickers.
+    Results appear at /api/signals within ~2-3 minutes.
+    """
+    def run():
+        from ..scheduler import scheduled_run
+        scheduled_run()
+
+    background_tasks.add_task(run)
+    return {
+        "message": "✅ Signal run started for all tickers (crypto always, stocks if market open).",
+        "check_results_at": "/api/signals",
+        "note": "Results will appear within 2-3 minutes. Refresh /api/signals to see them."
+    }
