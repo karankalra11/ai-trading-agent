@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import KeepAlive from "@/components/KeepAlive";
 
 export const metadata: Metadata = {
   title: "AI Trading Signal Agent",
@@ -30,6 +31,7 @@ export default function RootLayout({
             <a href="/" className="hover:text-white transition-colors">Dashboard</a>
           </div>
         </nav>
+        <KeepAlive />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           {children}
         </main>
