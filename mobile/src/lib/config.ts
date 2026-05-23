@@ -4,4 +4,4 @@
  * For Render: https://trading-signal-agent-api.onrender.com
  */
 export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
+  process.env.EXPO_PUBLIC_API_URL ?? "https://ai-trading-agent-0ujw.onrender.com";
