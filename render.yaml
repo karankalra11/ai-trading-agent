@@ -16,7 +16,7 @@ services:
                                 #   Get free key: openrouter.ai (any email)
 
       - key: OPENROUTER_MODEL
-        value: meta-llama/llama-3.3-70b-instruct:free
+        value: openai/gpt-oss-120b:free
 
       # ── Optional: Gemini backup ──────────────────────────────
       - key: GEMINI_API_KEY

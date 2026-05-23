@@ -15,7 +15,7 @@ class Settings(BaseSettings):
 
     # OpenRouter (FREE — any email, no card) — https://openrouter.ai
     openrouter_api_key: str = ""
-    openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
+    openrouter_model: str = "openai/gpt-oss-120b:free"
 
     # Gemini (FREE default) — https://aistudio.google.com/app/apikey
     gemini_api_key: str = ""

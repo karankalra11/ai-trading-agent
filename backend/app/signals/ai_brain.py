@@ -176,11 +176,10 @@ class OpenRouterBrain:
     Works with ANY email — Gmail, personal, anything.
     No credit card needed for free models.
 
-    Free models available:
-      meta-llama/llama-3.3-70b-instruct:free
-      deepseek/deepseek-r1:free
-      mistralai/mistral-7b-instruct:free
-      google/gemma-3-27b-it:free
+    Free models available (tested working as of May 2026):
+      openai/gpt-oss-120b:free       ← RECOMMENDED (best JSON compliance)
+      google/gemma-4-31b-it:free     ← Good backup
+      meta-llama/llama-3.3-70b-instruct:free  ← Sometimes rate-limited
 
     Get key: https://openrouter.ai  (sign up with any email)
     """
@@ -222,7 +221,20 @@ class OpenRouterBrain:
             except Exception as e:
                 if attempt == 2:
                     raise SignalParseError(f"OpenRouter failed for {ticker}: {e}")
-                time.sleep(2 ** attempt)
+                # Respect retry_after hint from OpenRouter rate-limit responses
+                retry_after = 30
+                try:
+                    import json as _json
+                    err_str = str(e)
+                    if "retry_after_seconds" in err_str:
+                        idx = err_str.find("retry_after_seconds':")
+                        if idx >= 0:
+                            val = err_str[idx:].split(":")[1].strip().split(",")[0].strip().rstrip("}")
+                            retry_after = max(int(float(val)) + 2, 5)
+                except Exception:
+                    pass
+                print(f"  ⏳ Rate limited — waiting {retry_after}s before retry {attempt + 2}/3…")
+                time.sleep(retry_after)
         raise SignalParseError("OpenRouter exhausted retries")
 
 
