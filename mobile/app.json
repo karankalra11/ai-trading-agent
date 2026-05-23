@@ -22,7 +22,11 @@
         "backgroundColor": "#0f1117"
       },
       "package": "com.yourname.aitradingagent",
-      "permissions": ["INTERNET", "RECEIVE_BOOT_COMPLETED", "VIBRATE"]
+      "permissions": [
+        "INTERNET",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -35,6 +39,14 @@
     "experiments": {
       "typedRoutes": true
     },
-    "extra": {}
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "3d5eab21-6f92-427d-876d-9aaeefead60b"
+      }
+    },
+    "owner": "karankalra11"
   }
 }
